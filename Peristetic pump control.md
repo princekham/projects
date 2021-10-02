@@ -1,0 +1,6 @@
+- no of threads = 5
+  - button 1 interrupt
+  - button 2 interrupt
+  -  LCD display
+  -  rotation 1
+  -  rotation 2
