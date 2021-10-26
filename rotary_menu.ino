@@ -1,397 +1,8 @@
-```
-/* Encoder Library - Basic Example
- * http://www.pjrc.com/teensy/td_libs_Encoder.html
- *
- * This example code is in the public domain.
- */
-
-#include <Encoder.h>
-
-
-//For OLED added by KZY
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-
-#include <Fonts/FreeSerif9pt7b.h>
-
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-// 
-
-int menuCount = 0; //counts the clicks of the rotary encoder between menu items (0-1 in this case)
-
-
-bool menu1_selected = false; //enable/disable to change the value of menu item
-bool menu2_selected = false;
-bool buttonPressed = true;
-
-int menu1_Value = 0; //value within menu 1
-int menu2_Value = 0; //value within menu 2
-  int data;
-
-
-// Change these two numbers to the pins connected to your encoder.
-//   Best Performance: both pins have interrupt capability
-//   Good Performance: only the first pin has interrupt capability
-//   Low Performance:  neither pin has interrupt capability
-Encoder myEnc(2, 3);
-//   avoid using pins with LEDs attached
-
-
-
-
-
-#define INTERVAL_MESSAGE1 500
-unsigned long time_1 = 0;
-
-void staticDisplay(){
-
- 
- display.setCursor(20, 30);
- display.println ("L Pump :"); //text
- display.display();
- 
- display.setCursor(20, 60);
- display.println ("R Pump :"); //text
- display.display();
- 
-}
-
-void updateLCD(int value)
-{  
-
- display.clearDisplay();
-
- staticDisplay();
-
- display.setCursor(90, 30);
- display.println (value);
- display.display();
- 
-
- display.setCursor(90, 60);
- display.println (value);
- display.display();
- 
-}
-void setup() {
-  pinMode(4, INPUT_PULLUP); //Button added by KZY
-  Serial.begin(9600);
-  Serial.println("Basic Encoder Test:");
-
-   //.................This part added by Sao
-   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
-   Serial.println("SSD1306 allocation failed");
-   for(;;);
- }
- delay(2000);
- display.setFont(&FreeSerif9pt7b);
- 
- display.clearDisplay();
- display.setTextSize(1);             
- display.setTextColor(WHITE);        
- display.setCursor(25,30);  
- 
- display.println("Demo");
- display.display();  
-                                                               
- delay(2000); 
- display.clearDisplay();
- staticDisplay();
-
- attachInterrupt(digitalPinToInterrupt(4), pushButton, FALLING); //PushButton pin is an interrupt pin
-}
-
-long oldPosition  = -999;
-
-void loop() {
-  long newPosition = myEnc.read();
-//  Serial.print("new position: "); // increase and decrese 4 fold
-//  Serial.println(newPosition/4);
-
-  if (newPosition != oldPosition) {
-
-  if(buttonPressed){
-    if(oldPosition<newPosition){
-      menuCount--;
-      if(menuCount<0){
-        menuCount=2;
-      }
-    } else if (oldPosition>newPosition){
-      menuCount++;
-      if(menuCount>2){
-        menuCount=0;
-      }
-    }
-    Serial.print(menuCount);
-  }
-
-    
-    oldPosition = newPosition;
-    data=newPosition/4;
-    Serial.println(data);
-
-  
-
-
-
-    
-    updateLCD(data); 
-  }
-
-}
-void pushButton(){
-  
-}
-```
-The following is rotary encoder with interrupt
-```
 
 /*******Interrupt-based Rotary Encoder Sketch*******
 by Simon Merrett, based on insight from Oleg Mazurov, Nick Gammon, rt, Steve Spence
 */
-
-static int pinA = 2; // Our first hardware interrupt pin is digital pin 2
-static int pinB = 3; // Our second hardware interrupt pin is digital pin 3
-volatile byte aFlag = 0; // let's us know when we're expecting a rising edge on pinA to signal that the encoder has arrived at a detent
-volatile byte bFlag = 0; // let's us know when we're expecting a rising edge on pinB to signal that the encoder has arrived at a detent (opposite direction to when aFlag is set)
-volatile byte encoderPos = 0; //this variable stores our current value of encoder position. Change to int or uin16_t instead of byte if you want to record a larger range than 0-255
-volatile byte oldEncPos = 0; //stores the last encoder position value so we can compare to the current reading and see if it has changed (so we know when to print to the serial monitor)
-volatile byte reading = 0; //somewhere to store the direct values we read from our interrupt pins before checking to see if we have moved a whole detent
-
-void setup() {
-  pinMode(pinA, INPUT_PULLUP); // set pinA as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
-  pinMode(pinB, INPUT_PULLUP); // set pinB as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
-  attachInterrupt(0,PinA,RISING); // set an interrupt on PinA, looking for a rising edge signal and executing the "PinA" Interrupt Service Routine (below)
-  attachInterrupt(1,PinB,RISING); // set an interrupt on PinB, looking for a rising edge signal and executing the "PinB" Interrupt Service Routine (below)
-  Serial.begin(115200); // start the serial monitor link
-}
-
-void PinA(){
-  cli(); //stop interrupts happening before we read pin values
-  reading = PIND & 0xC; // read all eight pin values then strip away all but pinA and pinB's values
-  if(reading == B00001100 && aFlag) { //check that we have both pins at detent (HIGH) and that we are expecting detent on this pin's rising edge
-    encoderPos --; //decrement the encoder's position count
-    bFlag = 0; //reset flags for the next turn
-    aFlag = 0; //reset flags for the next turn
-  }
-  else if (reading == B00000100) bFlag = 1; //signal that we're expecting pinB to signal the transition to detent from free rotation
-  sei(); //restart interrupts
-}
-
-void PinB(){
-  cli(); //stop interrupts happening before we read pin values
-  reading = PIND & 0xC; //read all eight pin values then strip away all but pinA and pinB's values
-  if (reading == B00001100 && bFlag) { //check that we have both pins at detent (HIGH) and that we are expecting detent on this pin's rising edge
-    encoderPos ++; //increment the encoder's position count
-    bFlag = 0; //reset flags for the next turn
-    aFlag = 0; //reset flags for the next turn
-  }
-  else if (reading == B00001000) aFlag = 1; //signal that we're expecting pinA to signal the transition to detent from free rotation
-  sei(); //restart interrupts
-}
-
-void loop(){
-  if(oldEncPos != encoderPos) {
-    Serial.println(encoderPos);
-    oldEncPos = encoderPos;
-  }
-}
-
-```
-
-I will combine the above codes with button press
-
-```
-#include <BfButton.h>
- 
-int btnPin=3; //GPIO #3-Push button on encoder
-int DT=4; //GPIO #4-DT on encoder (Output B)
-int CLK=5; //GPIO #5-CLK on encoder (Output A)
-BfButton btn(BfButton::STANDALONE_DIGITAL, btnPin, true, LOW);
- 
-int counter = 0;
-int angle = 0; 
-int aState;
-int aLastState;  
- 
-//Button press hanlding function
-void pressHandler (BfButton *btn, BfButton::press_pattern_t pattern) {
-  switch (pattern) {
-    case BfButton::SINGLE_PRESS:
-      Serial.println("Single push");
-      break;
-      
-    case BfButton::DOUBLE_PRESS:
-      Serial.println("Double push");
-      break;
-      
-    case BfButton::LONG_PRESS:
-      Serial.println("Long push");
-      break;
-  }
-}
- 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  Serial.println(angle);
-  pinMode(CLK,INPUT_PULLUP);
-  pinMode(DT,INPUT_PULLUP);
-  aLastState = digitalRead(CLK);
- 
-  //Button settings
-  btn.onPress(pressHandler)
-  .onDoublePress(pressHandler) // default timeout
-  .onPressFor(pressHandler, 1000); // custom timeout for 1 second
-}
- 
-void loop() {
-  // put your main code here, to run repeatedly:
- 
-  //Wait for button press to execute commands
-  btn.read();
-  
-  aState = digitalRead(CLK);
- 
-  //Encoder rotation tracking
-  if (aState != aLastState){     
-     if (digitalRead(DT) != aState) { 
-       counter ++;
-       angle ++;
-     }
-     else {
-       counter--;
-       angle --;
-     }
-     if (counter >=100 ) {
-       counter =100;
-     }
-     if (counter <=-100 ) {
-       counter =-100;
-     }
-     Serial.println(counter); 
-  }   
-  aLastState = aState;
-}
-
-```
-The following is the combined one
-
-```
-
-/*******Interrupt-based Rotary Encoder Sketch*******
-by Simon Merrett, based on insight from Oleg Mazurov, Nick Gammon, rt, Steve Spence
-*/
-#include <BfButton.h>
-
-int btnPin=4; //GPIO #3-Push button on encoder
-
-BfButton btn(BfButton::STANDALONE_DIGITAL, btnPin, true, LOW);
-
-static int pinA = 2; // Our first hardware interrupt pin is digital pin 2
-static int pinB = 3; // Our second hardware interrupt pin is digital pin 3
-volatile byte aFlag = 0; // let's us know when we're expecting a rising edge on pinA to signal that the encoder has arrived at a detent
-volatile byte bFlag = 0; // let's us know when we're expecting a rising edge on pinB to signal that the encoder has arrived at a detent (opposite direction to when aFlag is set)
-volatile byte encoderPos = 0; //this variable stores our current value of encoder position. Change to int or uin16_t instead of byte if you want to record a larger range than 0-255
-volatile byte oldEncPos = 0; //stores the last encoder position value so we can compare to the current reading and see if it has changed (so we know when to print to the serial monitor)
-volatile byte reading = 0; //somewhere to store the direct values we read from our interrupt pins before checking to see if we have moved a whole detent
-
-volatile int menuCount;
-
-boolean S_ButtonPressed = false;
-boolean D_ButtonPressed = false;
-
-//Button press hanlding function
-void pressHandler (BfButton *btn, BfButton::press_pattern_t pattern) {
-  switch (pattern) {
-    case BfButton::SINGLE_PRESS:
-      Serial.println("Single push");
-      
-      break;
-      
-    case BfButton::DOUBLE_PRESS:
-      Serial.println("Double push");
-      break;
-      
-    case BfButton::LONG_PRESS:
-      Serial.println("Long push");
-      break;
-  }
-}
-
-
-void setup() {
-  pinMode(pinA, INPUT_PULLUP); // set pinA as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
-  pinMode(pinB, INPUT_PULLUP); // set pinB as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
-  attachInterrupt(0,PinA,RISING); // set an interrupt on PinA, looking for a rising edge signal and executing the "PinA" Interrupt Service Routine (below)
-  attachInterrupt(1,PinB,RISING); // set an interrupt on PinB, looking for a rising edge signal and executing the "PinB" Interrupt Service Routine (below)
-  Serial.begin(9600); // start the serial monitor link
-
-    //Button settings
-  btn.onPress(pressHandler)
-  .onDoublePress(pressHandler) // default timeout
-  .onPressFor(pressHandler, 1000); // custom timeout for 1 second
-}
-
-void PinA(){
-  cli(); //stop interrupts happening before we read pin values
-  reading = PIND & 0xC; // read all eight pin values then strip away all but pinA and pinB's values
-  if(reading == B00001100 && aFlag) { //check that we have both pins at detent (HIGH) and that we are expecting detent on this pin's rising edge
-    encoderPos --; //decrement the encoder's position count
-    bFlag = 0; //reset flags for the next turn
-    aFlag = 0; //reset flags for the next turn
-  }
-  else if (reading == B00000100) bFlag = 1; //signal that we're expecting pinB to signal the transition to detent from free rotation
-  sei(); //restart interrupts
-}
-
-void PinB(){
-  cli(); //stop interrupts happening before we read pin values
-  reading = PIND & 0xC; //read all eight pin values then strip away all but pinA and pinB's values
-  if (reading == B00001100 && bFlag) { //check that we have both pins at detent (HIGH) and that we are expecting detent on this pin's rising edge
-    encoderPos ++; //increment the encoder's position count
-    bFlag = 0; //reset flags for the next turn
-    aFlag = 0; //reset flags for the next turn
-  }
-  else if (reading == B00001000) aFlag = 1; //signal that we're expecting pinA to signal the transition to detent from free rotation
-  sei(); //restart interrupts
-}
-
-void loop(){
-
-   btn.read();
-  if(oldEncPos != encoderPos) {
-    Serial.println(encoderPos);
-      if(D_ButtonPressed){
-    if(oldEncPos<encoderPos){
-      menuCount++;
-      if(menuCount>2){
-        menuCount=0;
-      }
-    } else if (oldEncPos>encoderPos){
-      menuCount--;
-      if(menuCount<0){
-        menuCount=2;
-      }
-    }
-    Serial.println(menuCount);
-  }
-    oldEncPos = encoderPos;
-  }
-}
-```
-The final working code is as follow:
-
-```
-
-/*******Interrupt-based Rotary Encoder Sketch*******
-by Simon Merrett, based on insight from Oleg Mazurov, Nick Gammon, rt, Steve Spence
-*/
+#include <EEPROM.h>
 #include <BfButton.h>
 //For OLED added by KZY
 
@@ -408,6 +19,8 @@ by Simon Merrett, based on insight from Oleg Mazurov, Nick Gammon, rt, Steve Spe
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // 
 
+int address1 = 0;      //EEPROM address counter
+int address2 = 5;      //EEPROM address counter
 
 int btnPin=4; //GPIO #3-Push button on encoder
 
@@ -424,6 +37,8 @@ volatile byte reading = 0; //somewhere to store the direct values we read from o
 volatile int menuCount;
 volatile int menu1Count=0;
 volatile int menu2Count=0;
+volatile byte count1 =0;
+volatile byte count2 =0;
 
 boolean S_ButtonPressed = false;
 boolean D_ButtonPressed = false;
@@ -553,11 +168,18 @@ void setup() {
  display.setTextColor(WHITE);        
  display.setCursor(25,40);  
  
- display.println("Demo");
+ display.println("Welcome!");
  display.display();  
                                                                
  delay(2000); 
  display.clearDisplay();
+ // Retrieve data from EEPROM
+ count1 = EEPROM.read(0);
+ count2 = EEPROM.read(5);
+menu1Count = count1*10;
+menu2Count = count2*10;
+
+ 
   staticDisplay();
 }
 
@@ -614,12 +236,14 @@ void loop(){
       showCursor = true;
       if(menuCount==0){
             if(oldEncPos<encoderPos){
-      menu1Count++;
+      count1++;
+      menu1Count=10* count1;
       if(menu1Count>999){
         menu1Count=0;
       }
     } else if (oldEncPos>encoderPos){
-      menu1Count--;
+      count1--;
+       menu1Count=10* count1;
       if(menu1Count<0){
         menu1Count=999;
       }
@@ -629,12 +253,14 @@ void loop(){
       }else if(menuCount==1){
 
       if(oldEncPos<encoderPos){
-      menu2Count++;
+      count2++;
+       menu2Count=10* count2;
       if(menu2Count>999){
         menu2Count=0;
       }
     } else if (oldEncPos>encoderPos){
-      menu2Count--;
+      count2--;
+      menu2Count=10* count2;
       if(menu2Count<0){
         menu2Count=999;
       }
@@ -650,7 +276,9 @@ void loop(){
   }
   if (showCursor == true && D_ButtonPressed == false){
     updateLCD();
+    //Update EEPROM
+    EEPROM.update(address1, (menu2Count/10)); // EEPROM can hold from 0 to 255
+    EEPROM.update(address2, (menu1Count/10));
     showCursor=false;
   }
 }
-```
