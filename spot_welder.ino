@@ -1,5 +1,9 @@
 // Ref: https://www.makerguides.com/tm1637-arduino-tutorial/ 
 
+//SCL - A5 and SDA - A4
+// promini layout at : https://2.bp.blogspot.com/-IhJMnyz0MB4/Vwsy92E4BLI/AAAAAAAAL9o/hI5jSk5_Z1sNOIOMQigtI7Ccv5G4ClHZw/s1600/Arduino%2Bmiini%2BATmega328-pinout%2B-%2BCopy%2B-%2BCopy.png
+// external interrupt pins : 2, 3
+
 
 #include "HX711.h"
 // HX711 circuit wiring
@@ -7,8 +11,8 @@ const int LOADCELL_DOUT_PIN = 6;
 const int LOADCELL_SCK_PIN = 5;
 
 // for press button
-const int buttonPin = 3; // for tare pin
-const int fillbutton = 2;
+//const int buttonPin = 3; // for tare pin
+//const int fillbutton = 2;
 
 //ezButton button(fillbutton);  // create ezButton object that attach to pin 7;
 //for on-off switch
@@ -57,8 +61,8 @@ int btnPin=17; //GPIO #17-Push button on encoder
 
 BfButton btn(BfButton::STANDALONE_DIGITAL, btnPin, true, LOW);
 
-static int pinA = 18; // Our first hardware interrupt pin is digital pin 2
-static int pinB = 19; // Our second hardware interrupt pin is digital pin 3
+static int pinA = 2; // Our first hardware interrupt pin is digital pin 2
+static int pinB = 3; // Our second hardware interrupt pin is digital pin 3
 // the middle pin to GND
 volatile byte aFlag = 0; // let's us know when we're expecting a rising edge on pinA to signal that the encoder has arrived at a detent
 volatile byte bFlag = 0; // let's us know when we're expecting a rising edge on pinB to signal that the encoder has arrived at a detent (opposite direction to when aFlag is set)
@@ -177,8 +181,8 @@ void setup() {
    pinMode(10, OUTPUT);    // sets the digital pin 11 as output
   pinMode(pinA, INPUT_PULLUP); // set pinA as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
   pinMode(pinB, INPUT_PULLUP); // set pinB as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
-  attachInterrupt(5,PinA,RISING); // set an interrupt on PinA, looking for a rising edge signal and executing the "PinA" Interrupt Service Routine (below)
-  attachInterrupt(4,PinB,RISING); // set an interrupt on PinB, looking for a rising edge signal and executing the "PinB" Interrupt Service Routine (below)
+  attachInterrupt(digitalPinToInterrupt(PinA),PinA,RISING); // set an interrupt on PinA, looking for a rising edge signal and executing the "PinA" Interrupt Service Routine (below)
+  attachInterrupt(digitalPinToInterrupt(PinB),PinB,RISING); // set an interrupt on PinB, looking for a rising edge signal and executing the "PinB" Interrupt Service Routine (below)
   Serial.begin(9600); // start the serial monitor link
 
     //Button settings
