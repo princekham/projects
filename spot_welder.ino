@@ -57,7 +57,7 @@ unsigned long lastExecutedMillis_2 = 0; // vairable to save the last executed ti
 int address1 = 0;      //EEPROM address counter
 //int address2 = 5;      //EEPROM address counter
 
-int btnPin=17; //GPIO #17-Push button on encoder
+int btnPin=8; //GPIO #8-Push button on encoder
 
 BfButton btn(BfButton::STANDALONE_DIGITAL, btnPin, true, LOW);
 
@@ -156,27 +156,6 @@ void pressHandler (BfButton *btn, BfButton::press_pattern_t pattern) {
 void setup() {
 
   
-  pinMode(buttonPin, INPUT_PULLUP);
-  pinMode(fillbutton, INPUT_PULLUP);
-  pinMode(switch1, INPUT_PULLUP);
-  
-  Serial.println("HX711 Demo");
-
-  Serial.println("Initializing the scale");
-
-  // Initialize library with data output pin, clock input pin and gain factor.
-  // Channel selection is made by passing the appropriate gain:
-  // - With a gain factor of 64 or 128, channel A is selected
-  // - With a gain factor of 32, channel B is selected
-  // By omitting the gain factor parameter, the library
-  // default "128" (Channel A) is used here.
-  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-  
-  scale.set_scale(384700.f);                      // this is inversely proportional to the output
-  scale.tare();               // reset the scale to 0
-  // Interrupt for button press for tare function
-  attachInterrupt(digitalPinToInterrupt(buttonPin),buttonPressed,RISING);  //  function for creating external interrupts at pin8 on Rising (LOW to HIGH)   
-  //attachInterrupt(digitalPinToInterrupt(fillbutton),fillbuttonPressed,RISING); 
   //-----------------------------------------------------
    pinMode(10, OUTPUT);    // sets the digital pin 11 as output
   pinMode(pinA, INPUT_PULLUP); // set pinA as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
@@ -301,7 +280,7 @@ if(digitalRead(switch1)==HIGH){
     lastExecutedMillis_2 = currentMillis; // save the last executed time
     updateLCD();
 }  
-if ((menu2Count<menu1Count)&&(digitalRead(fillbutton)==LOW)&&(filled==false)){ //Low means there is input
+if ((menu2Count<menu1Count)){ //Low means there is input
   digitalWrite(10, HIGH); // sets the digital pin 11 on
   Serial.println("There is output");
 }
@@ -314,8 +293,6 @@ if(menu2Count>=menu1Count)
   filled=true;
 
 
-if(digitalRead(fillbutton)==HIGH)
-  filled=false;
 
 //else if((menu2Count<menu1Count)&&(digitalRead(fillbutton)==HIGH))
 //{
