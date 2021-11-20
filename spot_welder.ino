@@ -12,6 +12,10 @@ by Simon Merrett, based on insight from Oleg Mazurov, Nick Gammon, rt, Steve Spe
 
 #include <Fonts/FreeSerif9pt7b.h>
 
+#include <ezButton.h>
+
+ezButton button(6);  // create ezButton object that attach to pin 7;
+
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
@@ -20,12 +24,15 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // 
 unsigned long previousMillis = 0;        // will store last time LED was updated
 // constants won't change:
-const long interval = 1000;           // interval at which to blink (milliseconds)
+int interval;                // variable to set the firing time
 
 int address1 = 0;      //EEPROM address counter
+//const int triggerPin = 6;    // the number of the trigger pin
+const int firePin =  7;     // the number of the fire pin
+int buttonState = 0;         // variable for reading the triggerPin state
+unsigned long currentTime;   // variable to capture current time (ms)
 
-
-int btnPin=8; //GPIO #3-Push button on encoder
+int btnPin=8; //GPIO #8-Push button on encoder
 
 BfButton btn(BfButton::STANDALONE_DIGITAL, btnPin, true, LOW);
 
@@ -61,7 +68,8 @@ void staticDisplay(){
   display.setCursor(90, 40);
  display.println (menu1Count);
  display.display();
- 
+
+}
 
 void updateLCD()
 {  
@@ -112,8 +120,14 @@ void pressHandler (BfButton *btn, BfButton::press_pattern_t pattern) {
 
 
 void setup() {
+  button.setDebounceTime(50); // set debounce time to 50 milliseconds
+  
   pinMode(pinA, INPUT_PULLUP); // set pinA as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
   pinMode(pinB, INPUT_PULLUP); // set pinB as an input, pulled HIGH to the logic voltage (5V or 3.3V for most cases)
+  
+  pinMode(firePin, OUTPUT);         // initialize the fire pin as an output:
+ // pinMode(triggerPin, INPUT_PULLUP);        // initialize the trigger pin as an input:
+  
   attachInterrupt(0,PinA,RISING); // set an interrupt on PinA, looking for a rising edge signal and executing the "PinA" Interrupt Service Routine (below)
   attachInterrupt(1,PinB,RISING); // set an interrupt on PinB, looking for a rising edge signal and executing the "PinB" Interrupt Service Routine (below)
   Serial.begin(9600); // start the serial monitor link
@@ -176,13 +190,42 @@ void PinB(){
   sei(); //restart interrupts
 }
 
-void loop(){
+void loop() {
+  button.loop(); // MUST call the loop() function first
 
-  unsigned long currentMillis = millis();
+ //unsigned long currentMillis = millis();
 
 if(D_ButtonPressed==false ){
 
 //check the input button and get the output
+
+
+  if(button.isPressed()){
+    Serial.println("The button is pressed");
+    Serial.print("Firing time is: ");
+    Serial.println(menu1Count);
+    digitalWrite(firePin, HIGH);
+    delay(menu1Count);
+    digitalWrite(firePin, LOW);
+    }
+
+  if(button.isReleased())
+    Serial.println("The button is released");
+
+// interval = 600;  // re-maps values to use in interval
+// 
+//  buttonState = digitalRead(triggerPin);
+//    if(buttonState == LOW)
+//      {
+//      delay(1000);                  // delay guarantees a single fire
+//      currentTime = millis();
+//      while(currentTime + interval >= millis()){  
+//      digitalWrite(firePin, HIGH);          // fires solenoid for time = interval
+//      Serial.println("Fired");
+//      }
+//    }
+//  digitalWrite(firePin, LOW);           // resets firePin to off (0)
+// // Serial.println("STOP Fired");
 
   
 }
