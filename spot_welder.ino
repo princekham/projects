@@ -54,7 +54,7 @@ boolean Button1Pressed= false;
 //boolean Button2Pressed = false;
 
 boolean S_ButtonPressed = false;
-boolean D_ButtonPressed = false;
+//boolean D_ButtonPressed = false;
 boolean showCursor = false;
 void staticDisplay(){
 
@@ -85,7 +85,7 @@ void updateLCD()
 }
 
 void Set_Cursor(){
- if(D_ButtonPressed){
+ if(S_ButtonPressed){
 
 
  display.setCursor(0, 40);
@@ -102,14 +102,14 @@ void pressHandler (BfButton *btn, BfButton::press_pattern_t pattern) {
   switch (pattern) {
     case BfButton::SINGLE_PRESS:
       Serial.println("Single push");
-      if(D_ButtonPressed){
+   //   if(D_ButtonPressed){
          S_ButtonPressed = (!S_ButtonPressed);
-      }
+ //     }
       break;
       
     case BfButton::DOUBLE_PRESS:
       Serial.println("Double push");
-      D_ButtonPressed = (!D_ButtonPressed);
+    //  D_ButtonPressed = (!D_ButtonPressed);
       break;
       
     case BfButton::LONG_PRESS:
@@ -195,7 +195,7 @@ void loop() {
 
  //unsigned long currentMillis = millis();
 
-if(D_ButtonPressed==false ){
+if(S_ButtonPressed==false ){
 
 //check the input button and get the output
 
@@ -211,23 +211,7 @@ if(D_ButtonPressed==false ){
 
   if(button.isReleased())
     Serial.println("The button is released");
-
-// interval = 600;  // re-maps values to use in interval
-// 
-//  buttonState = digitalRead(triggerPin);
-//    if(buttonState == LOW)
-//      {
-//      delay(1000);                  // delay guarantees a single fire
-//      currentTime = millis();
-//      while(currentTime + interval >= millis()){  
-//      digitalWrite(firePin, HIGH);          // fires solenoid for time = interval
-//      Serial.println("Fired");
-//      }
-//    }
-//  digitalWrite(firePin, LOW);           // resets firePin to off (0)
-// // Serial.println("STOP Fired");
-
-  
+ 
 }
 
   
@@ -236,7 +220,7 @@ if(D_ButtonPressed==false ){
   if(oldEncPos != encoderPos) {
     Serial.println(encoderPos);
    
-    if(D_ButtonPressed==true ){
+    if(S_ButtonPressed==true ){
    
       showCursor = true;
       
@@ -264,7 +248,7 @@ if(D_ButtonPressed==false ){
     
    oldEncPos = encoderPos;
   }
-  if (showCursor == true && D_ButtonPressed == false){
+  if (showCursor == true && S_ButtonPressed == false){
     updateLCD();
     //Update EEPROM
     EEPROM.update(address1, (menu1Count/10)); // EEPROM can hold from 0 to 255
