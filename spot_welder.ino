@@ -18,7 +18,7 @@ ezButton button(6);  // create ezButton object that attach to pin 7;
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
+// I2C: A4 (SDA) and A5 (SCL)
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // 
@@ -159,7 +159,7 @@ void setup() {
  // Retrieve data from EEPROM
 count1 = EEPROM.read(0);
 
-menu1Count = count1*10;
+menu1Count = count1*50;
 
 
  
@@ -226,17 +226,16 @@ if(S_ButtonPressed==false ){
       
      if(oldEncPos<encoderPos){
       count1++;
-      menu1Count=10* count1;
-      if(menu1Count>100){
+      menu1Count=50* count1;
+      if(menu1Count>2000){
         count1=0;
         menu1Count=0;
       }
     } else if (oldEncPos>encoderPos){
       count1--;
-      menu1Count=10* count1;
+      menu1Count=50* count1;
       if(menu1Count<0){
-        count1=10;
-        menu1Count=100;
+        menu1Count=2000;
       }
     }
         Serial.print("Menu1Count:");
@@ -251,8 +250,8 @@ if(S_ButtonPressed==false ){
   if (showCursor == true && S_ButtonPressed == false){
     updateLCD();
     //Update EEPROM
-    EEPROM.update(address1, (menu1Count/10)); // EEPROM can hold from 0 to 255
-   // EEPROM.update(address2, (menu1Count/10));
+    EEPROM.update(address1, (menu1Count/50)); // EEPROM can hold from 0 to 255
+   // EEPROM.update(address2, (menu1Count/50));
     showCursor=false;
   }
 }
